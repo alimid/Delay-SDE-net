@@ -137,7 +137,7 @@ optimizer_H = optim.SGD([{'params': net_epistemic.diffusion_epistemic.parameters
 real_label = 0
 fake_label = 1
 criterion = nn.BCELoss()
-auroc =  AUROC(pos_label=1)
+auroc =  AUROC(pos_label=1, task='binary')
 scaler = StandardScaler()
 
 
@@ -417,7 +417,7 @@ def test_epistemic(epoch):
 
         test_loss += loss.item()
         
-        auc_loc = auroc(predict_in.to(torch.float32), label.detach().to(torch.int64))
+        auc_loc = auroc(predict_in.to(torch.float32), label.detach().to(torch.int64), task='binary')
         auc += auc_loc
         
         
