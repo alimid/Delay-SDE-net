@@ -417,7 +417,7 @@ def test_epistemic(epoch):
 
         test_loss += loss.item()
         
-        auc_loc = auroc(predict_in.to(torch.float32), label.detach().to(torch.int64), task='binary')
+        auc_loc = auroc(predict_in.to(torch.float32), label.detach().to(torch.int64))
         auc += auc_loc
         
         
