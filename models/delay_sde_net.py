@@ -3,16 +3,11 @@
 """
 Created on Mon Mar 11 16:42:11 2019
 
-@author: lingkaikong
+@author: alimid
 """
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import random
-import torch.nn.init as init
-import math
-import numpy as np
 
 
 __all__ = ['SDENet_drift','SDENet_diffusion','SDENet_epistemic']
@@ -22,17 +17,11 @@ class Drift(nn.Module):
         super(Drift, self).__init__()
         self.fc = nn.Linear(m*(p+1)+1,2*(m*(p+1)+1))
         self.fc2 = nn.Linear(2*(m*(p+1)+1),m, bias=True)
-        self.sigmoid = nn.Sigmoid()
         self.softplus = nn.Softplus(500)
-
     def forward(self, x):
-
         out = self.softplus(self.fc(x))
         out = self.fc2(out)
         return out    
-
-
-
 
 class Diffusion(nn.Module):
     def __init__(self,p,m):
@@ -45,7 +34,6 @@ class Diffusion(nn.Module):
         out_diff = self.softplus(self.fc1(x))
         out_diff = self.softplus(self.fc2(out_diff))
         return out_diff
-    
     
 class Diffusion_epistemic(nn.Module):
     def __init__(self,p,m):
@@ -62,8 +50,6 @@ class Diffusion_epistemic(nn.Module):
         out = self.sigmoid(self.fc2(out))
         return out
     
-
-    
     
 class SDENet_drift(nn.Module):
     def __init__(self, m,p,l):
@@ -75,16 +61,16 @@ class SDENet_drift(nn.Module):
         self.layer_depth = 1
     def forward(self, x, t=None):
         inputs = x
-
         time = t[self.p:]
         time_delta = t[self.p+1]-t[self.p]
         out = inputs[self.p:]
         out_last = inputs[:len(inputs)-self.p]
         out_lags = out_last.clone()
+        
         for i in range(1,self.p+1):
             out_lag = inputs[i:len(inputs)-self.p+i]
             out_lags = torch.column_stack((out_lags, out_lag))
-        
+
         out_lags = torch.column_stack((out_lags,time))
         mask = torch.arange(self.m,len(out_lags[0])-1)
         
@@ -96,7 +82,7 @@ class SDENet_drift(nn.Module):
             out_lags = torch.column_stack((out_lags,out))
             out_lags = torch.column_stack((out_lags,time))
         
-        mean = out[:,0]
+        mean = out
         return mean, drift_out 
 
         
@@ -125,7 +111,6 @@ class SDENet_diffusion(nn.Module):
         self.p = p
     def forward(self, x, t=None):
         inputs = x
-        
         time = t[self.p:]
         out = inputs[:len(inputs)-self.p]
         out_lags = out.clone()
