@@ -10,4 +10,4 @@ for applications where time is sparse
 
 Eggen, Mari Dahl, and Alise Danielle Midtfjord. "Delay-SDE-net: A deep learning approach for time series modelling with memory and uncertainty estimates." arXiv preprint arXiv:2303.08587 (2023).
 
-Kong, L., Sun, J. & Zhang, C.. (2020). SDE-Net: Equipping Deep Neural Networks with Uncertainty Estimates. Proceedings of the 37th International Conference on Machine Learning, in Proceedings of Machine Learning Research. 
+Kong, L., Sun, J. & Zhang, C. "SDE-Net: Equipping Deep Neural Networks with Uncertainty Estimates." Proceedings of the 37th International Conference on Machine Learning, in Proceedings of Machine Learning Research (2020). 
