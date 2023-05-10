@@ -34,7 +34,7 @@ state = 111
 # Number of lags to use (excluding the present day)
 p = 3
 
-# Number of variables/features (including time)
+# Number of variables/features (excluding time)
 m = 9
 
 # Number of days forward to predict: Keep zero for real-time inference
