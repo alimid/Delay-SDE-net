@@ -53,3 +53,5 @@ d_off=5.8
 
 # Softness, which decides how the OOD points creep in pockets or the original data
 softness = 0.5
+
+incl_y = False

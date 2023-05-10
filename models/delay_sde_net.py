@@ -16,7 +16,7 @@ class Drift(nn.Module):
     def __init__(self,p,m):
         super(Drift, self).__init__()
         self.fc = nn.Linear(m*(p+1)+1,2*(m*(p+1)+1))
-        self.fc2 = nn.Linear(2*(m*(p+1)+1),1, bias=True) #m
+        self.fc2 = nn.Linear(2*(m*(p+1)+1),m, bias=True) #m
         self.softplus = nn.Softplus(500)
     def forward(self, x):
         out = self.softplus(self.fc(x))
@@ -52,13 +52,14 @@ class Diffusion_epistemic(nn.Module):
     
     
 class SDENet_drift(nn.Module):
-    def __init__(self, m,p,l):
+    def __init__(self, m,p,l,incl_y=True):
         super(SDENet_drift, self).__init__()
         self.drift = Drift(p,m)
         self.deltat = 1
         self.p = p
         self.m = m
         self.layer_depth = 1
+        self.incl_y = incl_y
     def forward(self, x, t=None):
         inputs = x
         time = t[self.p:]
@@ -75,15 +76,17 @@ class SDENet_drift(nn.Module):
         mask = torch.arange(self.m,len(out_lags[0])-1)
         
         for i in range(self.layer_depth):
-     #       out = out + self.drift(out_lags)*self.deltat
-            out = self.drift(out_lags)*self.deltat
+            if self.incl_y == True:
+                out = out + self.drift(out_lags)*self.deltat
+            else:
+                out = self.drift(out_lags)*self.deltat
             drift_out = self.drift(out_lags)
             out_lags = torch.index_select(out_lags,1,mask)
             time = time + time_delta
             out_lags = torch.column_stack((out_lags,out))
             out_lags = torch.column_stack((out_lags,time))
         
-        mean = out
+        mean = out[:,0]
         return mean, drift_out 
 
         

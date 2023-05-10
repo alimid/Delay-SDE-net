@@ -43,6 +43,7 @@ const_ep = cfg.const_ep
 d_min=cfg.d_min
 d_off=cfg.d_off
 softness = cfg.softness
+incl_y = cfg.incl_y
 
 #----------------------------------------------
 
@@ -119,7 +120,7 @@ y_test = torch.from_numpy(y_test).type(torch.FloatTensor).reshape(-1)
 
 # Model
 print('==> Building model..')
-net_drift = models.SDENet_drift(m=m,p=p,l=l)
+net_drift = models.SDENet_drift(m=m,p=p,l=l, incl_y=incl_y)
 net_drift = net_drift.to(device)
 
 net_diffusion = models.SDENet_diffusion(m=m,p=p)
