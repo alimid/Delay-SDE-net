@@ -12,7 +12,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
-import data_loader
 import argparse
 import numpy as np
 import models 
@@ -21,23 +20,43 @@ import matplotlib.pyplot as plt
 from sbo import soft_brownian_offset
 from torchmetrics import AUROC
 
-
-#----- Change these: Learnings rates (f,g_a and g_e)
-lr = 0.0005
-lr2 = 0.000005
-lr3 = 0.01
+import data_loader
+import config as cfg
 
 
-parser = argparse.ArgumentParser(description='PyTorch SDENet Training')
+#----- Settings
+lr_f = cfg.lr_f
+lr_ga = cfg.lr_ga
+lr_ge = cfg.lr_ge
+n_epochs_f = cfg.n_epochs_f
+n_epochs_ga = cfg.n_epochs_ga
+n_epochs_ge = cfg.n_epochs_ge
+batch_size = cfg.batch_size 
+Iter = cfg.Iter
+Iter_test = cfg.Iter_test
+dataset_name = cfg.dataset_name
+state = cfg.state
+p = cfg.p
+m = cfg.m
+l = cfg.l
+const_ep = cfg.const_ep
+d_min=cfg.d_min
+d_off=cfg.d_off
+softness = cfg.softness
 
-#----- Change these: Number of epochs (f,g_a and g_e)
-parser.add_argument('--epochs', type=int, default=500, help='number of epochs to train')
-parser.add_argument('--epochs_aleatory', type=int, default=500, help='number of epochs to train') 
-parser.add_argument('--epochs_epistemic', type=int, default=20, help='number of epochs to train')
+#----------------------------------------------
 
-parser.add_argument('--lr', default=lr, type=float, help='learning rate')
-parser.add_argument('--lr2', default=lr2, type=float, help='learning rate')
-parser.add_argument('--lr3', default=lr3, type=float, help='learning rate')
+
+parser = argparse.ArgumentParser(description='PyTorch Delay-SDE-Net Training')
+
+#----- Training settings
+parser.add_argument('--epochs_f', type=int, default=n_epochs_f, help='number of epochs to train')
+parser.add_argument('--epochs_ga', type=int, default=n_epochs_ga, help='number of epochs to train') 
+parser.add_argument('--epochs_ge', type=int, default=n_epochs_ge, help='number of epochs to train')
+
+parser.add_argument('--lr_f', default=lr_f, type=float, help='learning rate')
+parser.add_argument('--lr_ga', default=lr_ga, type=float, help='learning rate')
+parser.add_argument('--lr_ge', default=lr_ge, type=float, help='learning rate')
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--seed', type=float, default=12)
 
@@ -47,13 +66,6 @@ print(args)
 
 # Device
 device = torch.device('cuda:' + str(args.gpu) if torch.cuda.is_available() else 'cpu')
-
-#----- Change this: Number of days/time points in your data
-batch_size = int(365)
-
-#----- Change these: Number of years/iterations in training and test data
-Iter = 5
-Iter_test = 2
 
 
 # Data
@@ -69,7 +81,7 @@ if device == 'cuda':
     
 
 #----- Change this: Name used in data_loader to load your dataset
-X_train, y_train, X_test, y_test  = data_loader.load_dataset('load_wind_3sound')
+X_train, y_train, X_test, y_test  = data_loader.load_dataset(dataset_name)
 
 
 year = np.arange(1,batch_size+1)
@@ -95,8 +107,6 @@ y_test = scaler.transform(y_test.reshape(-1,1))
 target_scale =scaler.scale_
 target_mean =scaler.mean_
 
-
-
 T = torch.from_numpy(all_years).type(torch.FloatTensor).reshape(-1)
 T_test = torch.from_numpy(test_years).type(torch.FloatTensor).reshape(-1)
     
@@ -106,13 +116,6 @@ X_test = torch.from_numpy(X_test).type(torch.FloatTensor)
 y_train = torch.from_numpy(y_train).type(torch.FloatTensor).reshape(-1)
 y_test = torch.from_numpy(y_test).type(torch.FloatTensor).reshape(-1)
 
-
-#----- Change this: Number of lags to use (excluding the present day)
-p = 3
-#----- Change this: Number of variables/features
-m = 9
-#----- Number of days forward to predict: Keep zero for now
-l = 0
 
 # Model
 print('==> Building model..')
@@ -126,12 +129,12 @@ net_epistemic = models.SDENet_epistemic(m=m,p=p)
 net_epistemic = net_epistemic.to(device)
 
 
-optimizer_F = optim.SGD([{'params': net_drift.drift.parameters()}], lr=args.lr, momentum=0.9, weight_decay=5e-4)
+optimizer_F = optim.SGD([{'params': net_drift.drift.parameters()}], lr=args.lr_f, momentum=0.9, weight_decay=5e-4)
 
 
-optimizer_G = optim.SGD([ {'params': net_diffusion.diffusion.parameters()}], lr=args.lr2, momentum=0.9, weight_decay=5e-4)
+optimizer_G = optim.SGD([ {'params': net_diffusion.diffusion.parameters()}], lr=args.lr_ga, momentum=0.9, weight_decay=5e-4)
 
-optimizer_H = optim.SGD([{'params': net_epistemic.diffusion_epistemic.parameters()}], lr=args.lr3, momentum=0.9, weight_decay=5e-4)
+optimizer_H = optim.SGD([{'params': net_epistemic.diffusion_epistemic.parameters()}], lr=args.lr_ge, momentum=0.9, weight_decay=5e-4)
 
 
 real_label = 0
@@ -157,17 +160,6 @@ def load_test(iternum):
     t = T_test[iternum*batch_size:(iternum+1)*batch_size]
     return x, y, t
 
-
-def delete_last_n_columns(a, n):
-    n_cols = a.size()[1]
-    assert(n<n_cols)
-    first_cols = n_cols - n
-    mask = torch.arange(0,first_cols)
-    b = torch.index_select(a,1,mask) # Retain first few columns; delete last_n columns
-    return b
-
-def sigmoid(z):
-    return 1/(1+torch.exp(-z))
 
 # Training
 def train_drift(epoch):
@@ -312,7 +304,6 @@ def train_epistemic(epoch):
         inputs, targets, t = load_training(iternum)
 
         inputs, targets = inputs.to(device), targets.to(device)
-        inputs = inputs
         
         label = torch.full((batch_size,1), real_label, device=device)
         label = label[p:]
@@ -333,13 +324,12 @@ def train_epistemic(epoch):
         
         X_train2 = np.hstack((out_lags,t_p))
         
-        X_ood_lags = soft_brownian_offset(X_train2, d_min=6.0, d_off=5.8, n_samples=((int((365-p)/2))), softness = 0.5)
-        X_ood_lags_1 = soft_brownian_offset(np.column_stack((out,t_p)), d_min=6.0, d_off=5.8, n_samples=((int((365-p)/2))), softness = 0.5)
+        X_ood_lags = soft_brownian_offset(X_train2, d_min=d_min, d_off=d_off, n_samples=((int((batch_size-p)/2))), softness = softness, random_state = state)
+        X_ood_lags_1 = soft_brownian_offset(np.column_stack((out,t_p)), d_min=d_min, d_off=d_off, n_samples=((int((batch_size-p)/2))), softness = softness, random_state = state+1)
         X_ood_lags_pres = X_ood_lags_1.copy()
 
         for i in range(p):
             X_ood_lags_pres = np.column_stack((X_ood_lags_1[:,:-1],X_ood_lags_pres))
-            
 
         X_ood_lags = np.row_stack((X_ood_lags, X_ood_lags_pres))
         X_ood_lags = X_ood_lags[X_ood_lags[:,-1]<X_train2[:,-1].max()]
@@ -380,38 +370,49 @@ def test_epistemic(epoch):
 
         inputs, targets = inputs.to(device), targets.to(device)
         
-        
         label = torch.full((batch_size,1), real_label, device=device)
         label = label[p:]
-    
+        
 
+        optimizer_H.zero_grad()
+        
+        
         out = inputs[:len(inputs)-p]
         out_lags = out.clone()
         for i in range(1,p+1):
             out_lag = inputs[i:len(inputs)-p+i]
             out_lags = torch.column_stack((out_lags, out_lag))
+            
+        
         
         t_p = t[p:].numpy().reshape((-1,1))
         
-        X_test = np.hstack((out_lags,t_p))
+        X_train2 = np.hstack((out_lags,t_p))
         
+        X_ood_lags = soft_brownian_offset(X_train2, d_min=d_min, d_off=d_off, n_samples=((int((batch_size-p)/2))), softness = softness, random_state = state)
+        X_ood_lags_1 = soft_brownian_offset(np.column_stack((out,t_p)), d_min=d_min, d_off=d_off, n_samples=((int((batch_size-p)/2))), softness = softness, random_state = state+1)
+        X_ood_lags_pres = X_ood_lags_1.copy()
 
-        X_ood_lags = soft_brownian_offset(X_test, d_min=1.2, d_off=1.2, n_samples=((365-p)),softness=0.5, random_state = 111)
-        X_ood_lags = X_ood_lags[X_ood_lags[:,-1]<X_test[:,-1].max()]
-        X_ood_lags = X_ood_lags[X_ood_lags[:,-1]>X_test[:,-1].min()]
+        for i in range(p):
+            X_ood_lags_pres = np.column_stack((X_ood_lags_1[:,:-1],X_ood_lags_pres))
+            
+
+        X_ood_lags = np.row_stack((X_ood_lags, X_ood_lags_pres))
+        X_ood_lags = X_ood_lags[X_ood_lags[:,-1]<X_train2[:,-1].max()]
+        X_ood_lags = X_ood_lags[X_ood_lags[:,-1]>X_train2[:,-1].min()]
         
         label_fake = torch.full((len(X_ood_lags),1), fake_label, device=device)
         
         label = torch.vstack((label,label_fake))
-
-        X = np.vstack((X_test,X_ood_lags))
+        
+        X = np.vstack((X_train2,X_ood_lags))
+        
         
         X = torch.from_numpy(X)
-    
-        
-        predict_in = net_epistemic(X)
-        
 
+        
+        predict_in= net_epistemic(X)
+        
         
         loss = criterion(predict_in.to(torch.float32), label.detach().to(torch.float32))
 
@@ -422,30 +423,25 @@ def test_epistemic(epoch):
         
         
         
-        predict_new = net_epistemic(torch.from_numpy(X_test))
-        
-        predict_new = predict_new[1:len(X)]
-        
-        
     print('Test epoch:{} \gLoss: {:.6f} ROC AUC: {:.6f}'.format(epoch, test_loss/Iter_test, auc/Iter_test))
-    return(predict_new.detach())
+    return(predict_in.detach())
 
 
 
 print('Train drift')
-for epoch in range(0, args.epochs):
+for epoch in range(0, args.epochs_f):
     train_drift(epoch)
     pred, drift = test_drift(epoch)
     
     
 print('Train diffusion')
-for epoch in range(0, args.epochs_aleatory):
+for epoch in range(0, args.epochs_ga):
     train_diffusion(epoch)
     diffusion = test_diffusion(epoch)
     
     
 print('Train epistemic')
-for epoch in range(0, args.epochs_epistemic):
+for epoch in range(0, args.epochs_ge):
     train_epistemic(epoch)
     pred_epistemic = test_epistemic(epoch)
     
@@ -500,8 +496,6 @@ for iternum in range(Iter_test):
     plt.ylabel('U Wind')
     plt.legend()
     plt.show()
-    
-    const_ep = 20
     
     
     plt.plot(x,(diff)**2, label=r'$e^2$')
@@ -599,9 +593,6 @@ plt.plot(x,atrue_s)
 plt.plot(x,c)
 plt.show()
 
-
-#----- Change this: sigma_max, maximum value of epistemic uncertainty
-const_ep = 20
 
 plt.plot(x,diff**2, label=r'$e^2$')
 plt.plot(x,(const_ep*a_epistemic)**2 +a_diffusion, label = r'$g_tot^2$')

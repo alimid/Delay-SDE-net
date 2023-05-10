@@ -63,16 +63,16 @@ def load_wind_3sound():
     :return: The test features
     :return: The test response (u wind)
     '''
-    filename_infrasound_37 = 'x37.txt'
-    filename_infrasound_18 = 'x18.txt'
-    filename_infrasound_53 = 'x53.txt'
-    filename_infrasound_37_2 = 'y37.txt'
-    filename_infrasound_18_2 = 'y18.txt'
-    filename_infrasound_53_2 = 'y53.txt'
-    filename_infrasound_37_3 = 'ampl37.txt'
-    filename_infrasound_18_3 = 'ampl18.txt'
-    filename_infrasound_53_3 = 'ampl53.txt'
-    filename_uwind = 'wind.txt'
+    filename_infrasound_37 = 'data\sound_x37.txt'
+    filename_infrasound_18 = 'data\sound_x18.txt'
+    filename_infrasound_53 = 'data\sound_x53.txt'
+    filename_infrasound_37_2 = 'data\sound_y37.txt'
+    filename_infrasound_18_2 = 'data\sound_y18.txt'
+    filename_infrasound_53_2 = 'data\sound_y53.txt'
+    filename_infrasound_37_3 = 'data\sound_ampl37.txt'
+    filename_infrasound_18_3 = 'data\sound_ampl18.txt'
+    filename_infrasound_53_3 = 'data\sound_ampl53.txt'
+    filename_uwind = 'data\wind.txt'
     
     infrasound_sin_37 = np.loadtxt(filename_infrasound_37)
     infrasound_sin_18 = np.loadtxt(filename_infrasound_18)

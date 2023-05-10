@@ -16,7 +16,7 @@ class Drift(nn.Module):
     def __init__(self,p,m):
         super(Drift, self).__init__()
         self.fc = nn.Linear(m*(p+1)+1,2*(m*(p+1)+1))
-        self.fc2 = nn.Linear(2*(m*(p+1)+1),m, bias=True)
+        self.fc2 = nn.Linear(2*(m*(p+1)+1),1, bias=True) #m
         self.softplus = nn.Softplus(500)
     def forward(self, x):
         out = self.softplus(self.fc(x))
@@ -75,7 +75,8 @@ class SDENet_drift(nn.Module):
         mask = torch.arange(self.m,len(out_lags[0])-1)
         
         for i in range(self.layer_depth):
-            out = out + self.drift(out_lags)*self.deltat
+     #       out = out + self.drift(out_lags)*self.deltat
+            out = self.drift(out_lags)*self.deltat
             drift_out = self.drift(out_lags)
             out_lags = torch.index_select(out_lags,1,mask)
             time = time + time_delta

@@ -520,10 +520,6 @@ def test_epistemic(epoch):
     
         
         predict_in = net_epistemic(X)
-        
-#        current_mean = prediction.detach().reshape(-1,1)*target_scale
-        
-  #      np.sqrt(((np.sqrt(diff**2)-np.sqrt(a_diffusion))**2).mean())
 
         
         loss = criterion(predict_in.to(torch.float32), label.detach().to(torch.float32))
@@ -562,7 +558,7 @@ for epoch in range(0, args.epochs_aleatory):
 print('Train epistemic')
 for epoch in range(0, args.epochs_epistemic):
     train_epistemic(epoch)
-#    pred_epistemic = test_epistemic(epoch)
+    pred_epistemic = test_epistemic(epoch)
     
 for iternum in range(Iter_test):
     inputs, targets, t = load_test(iternum)
