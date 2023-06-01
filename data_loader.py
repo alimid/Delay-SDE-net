@@ -6,7 +6,7 @@ Created on Wed May  1 21:20:18 2019
 @author: alise midtfjord
 
 
-This script created and load in the selected datasets.
+This script create and load in the selected datasets.
 
 
 """
@@ -92,16 +92,6 @@ def load_wind_3sound():
     filename_infrasound_18_3 = f'data{slash}sound_ampl18.txt'
     filename_infrasound_53_3 = f'data{slash}sound_ampl53.txt'
     filename_uwind = f'data{slash}wind.txt'
-    filename_infrasound_37 = 'data\sound_x37.txt'
-    filename_infrasound_18 = 'data\sound_x18.txt'
-    filename_infrasound_53 = 'data\sound_x53.txt'
-    filename_infrasound_37_2 = 'data\sound_y37.txt'
-    filename_infrasound_18_2 = 'data\sound_y18.txt'
-    filename_infrasound_53_2 = 'data\sound_y53.txt'
-    filename_infrasound_37_3 = 'data\sound_ampl37.txt'
-    filename_infrasound_18_3 = 'data\sound_ampl18.txt'
-    filename_infrasound_53_3 = 'data\sound_ampl53.txt'
-    filename_uwind = 'data\wind.txt'
     
     infrasound_sin_37 = np.loadtxt(filename_infrasound_37)
     infrasound_sin_18 = np.loadtxt(filename_infrasound_18)
