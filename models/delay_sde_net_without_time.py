@@ -39,9 +39,9 @@ class Diffusion_epistemic(nn.Module):
     def __init__(self,p,m):
         super(Diffusion_epistemic, self).__init__()
         self.relu = nn.ReLU(inplace=True)
-        self.fc1 = nn.Linear(m*(p+1)+1, int(2*(m*(p+1)+1)))
+        self.fc1 = nn.Linear(m*(p+1), int(2*(m*(p+1))))
         nn.init.kaiming_uniform_(self.fc1.weight)
-        self.fc2 = nn.Linear(int(2*(m*(p+1)+1)), 1, bias=True)
+        self.fc2 = nn.Linear(int(2*(m*(p+1))), 1, bias=True)
         nn.init.kaiming_uniform_(self.fc2.weight)
         self.sigmoid = nn.Sigmoid()
         self.softplus = nn.Softplus(500) #100
