@@ -349,68 +349,7 @@ def test_diffusion(epoch):
     if log==True:
         wandb.log({"diffusion loss": np.sqrt(test_loss_in/(Iter_test))})
     return(predict_in.detach())
-           
-
-# =============================================================================
-# def train_epistemic(epoch):
-#     print('\nEpoch: %d' % epoch)
-#     net_epistemic.train()
-#     train_loss = 0
-#     
-#     for iternum in range(Iter):
-#         inputs, targets, t = load_training(iternum)
-# 
-#         inputs, targets = inputs.to(device), targets.to(device)
-#         
-#         label = torch.full((batch_size,1), real_label, device=device)
-#         label = label[p:]
-#         
-# 
-#         optimizer_H.zero_grad()
-#         
-#         
-#         out = inputs[:len(inputs)-p]
-#         out_lags = out.clone()
-#         for i in range(1,p+1):
-#             out_lag = inputs[i:len(inputs)-p+i]
-#             out_lags = torch.column_stack((out_lags, out_lag))
-#             
-#         
-#         
-#         t_p = t[p:].numpy().reshape((-1,1))
-#         
-#         X_train2 = np.hstack((out_lags,t_p))
-#         
-#         X_ood_lags = soft_brownian_offset(X_train2, d_min=1.2, d_off=1.0, n_samples=((((int((365-p)))))), softness = 0.5)
-#       
-#         X_ood_lags = X_ood_lags[X_ood_lags[:,-1]<X_train2[:,-1].max()]
-#         X_ood_lags = X_ood_lags[X_ood_lags[:,-1]>X_train2[:,-1].min()]
-#         
-#         label_fake = torch.full((len(X_ood_lags),1), fake_label, device=device)
-#         
-#         label = torch.vstack((label,label_fake))
-#         
-#         X = np.vstack((X_train2,X_ood_lags))
-#         
-#         
-#         X = torch.from_numpy(X)
-# 
-#         
-#         predict= net_epistemic(X)
-#         
-# 
-#         
-#         loss = criterion(predict.to(torch.float32), label.detach().to(torch.float32))
-#         loss.backward()
-#         
-#         train_loss += loss.item()
-#         optimizer_H.step()
-#         
-#         
-#       
-#     print('Train epoch:{} Loss:  {:.6f}'.format(epoch, train_loss/Iter))
-#     return()
-# =============================================================================
+        
 
 
 def train_epistemic(epoch):
